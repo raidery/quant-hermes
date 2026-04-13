@@ -1,0 +1,103 @@
+{
+  "date": "2026-04-13",
+  "selected_strategies": [
+    "隔夜持股v2.2",
+    "资金共振选股v2.1"
+  ],
+  "strategy_results": {
+    "隔夜持股v2.2": {
+      "query": "收盘获利大于62%",
+      "candidates": [],
+      "after_14_30_filter": []
+    },
+    "资金共振选股v2.1": {
+      "query": "60天的主力净流入天数大于35天",
+      "candidates": [],
+      "after_14_30_filter": []
+    }
+  },
+  "candidates": [
+    {
+      "code": "000762",
+      "name": "西藏矿业",
+      "chg": 10.0,
+      "price": 33.88,
+      "turnover": 360653.0,
+      "strategy": "收盘获利大于62%",
+      "price_1430": 33.88,
+      "filter_reason": "涨幅>6%放弃"
+    },
+    {
+      "code": "001309",
+      "name": "德明利",
+      "chg": 10.0,
+      "price": 447.24,
+      "turnover": 110092.0,
+      "strategy": "收盘获利大于62%",
+      "price_1430": 447.24,
+      "filter_reason": "涨幅>6%放弃"
+    },
+    {
+      "code": "002328",
+      "name": "新朋股份",
+      "chg": 10.01,
+      "price": 10.11,
+      "turnover": 280544.0,
+      "strategy": "收盘获利大于62%",
+      "price_1430": 10.11,
+      "filter_reason": "涨幅>6%放弃"
+    },
+    {
+      "code": "002418",
+      "name": "康盛股份",
+      "chg": 10.06,
+      "price": 5.69,
+      "turnover": 402530.0,
+      "strategy": "收盘获利大于62%",
+      "price_1430": 5.69,
+      "filter_reason": "涨幅>6%放弃"
+    },
+    {
+      "code": "002528",
+      "name": "ST英飞拓",
+      "chg": 4.98,
+      "price": 4.85,
+      "turnover": 338006.0,
+      "strategy": "收盘获利大于62%",
+      "price_1430": 4.85,
+      "filter_reason": "换手率>15%排除"
+    },
+    {
+      "code": "603301",
+      "name": "振德医疗",
+      "chg": -6.01,
+      "price": 81.77,
+      "turnover": 16199.0,
+      "strategy": "60天的主力净流入天数大于35天",
+      "price_1430": 81.77,
+      "filter_reason": "换手率>15%排除"
+    },
+    {
+      "code": "300923",
+      "name": "研奥股份",
+      "chg": 1.83,
+      "price": 27.75,
+      "turnover": 7768.0,
+      "strategy": "60天的主力净流入天数大于35天",
+      "price_1430": 27.75,
+      "filter_reason": "换手率>15%排除"
+    },
+    {
+      "code": "301057",
+      "name": "汇隆新材",
+      "chg": -0.19,
+      "price": 32.32,
+      "turnover": 8524.0,
+      "strategy": "60天的主力净流入天数大于35天",
+      "price_1430": 32.32,
+      "filter_reason": "换手率>15%排除"
+    }
+  ],
+  "final_recommendations": [],
+  "filter_applied_at": "2026-04-13 07:15:56"
+}
