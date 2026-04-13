@@ -2,102 +2,107 @@
   "date": "2026-04-13",
   "selected_strategies": [
     "隔夜持股v2.2",
-    "资金共振选股v2.1"
+    "资金共振选股v2.1",
+    "趋势回踩确认v1.0"
   ],
   "strategy_results": {
     "隔夜持股v2.2": {
       "query": "收盘获利大于62%",
-      "candidates": [],
-      "after_14_30_filter": []
+      "total": 20,
+      "filtered": 20
     },
     "资金共振选股v2.1": {
       "query": "60天的主力净流入天数大于35天",
-      "candidates": [],
-      "after_14_30_filter": []
+      "total": 20,
+      "filtered": 20
+    },
+    "趋势回踩确认v1.0": {
+      "query": "5天累计涨跌幅大于0%",
+      "total": 20,
+      "filtered": 20
     }
   },
   "candidates": [
     {
-      "code": "000762",
-      "name": "西藏矿业",
-      "chg": 10.0,
-      "price": 33.88,
-      "turnover": 360653.0,
-      "strategy": "收盘获利大于62%",
-      "price_1430": 33.88,
-      "filter_reason": "涨幅>6%放弃"
-    },
-    {
-      "code": "001309",
-      "name": "德明利",
-      "chg": 10.0,
-      "price": 447.24,
-      "turnover": 110092.0,
-      "strategy": "收盘获利大于62%",
-      "price_1430": 447.24,
-      "filter_reason": "涨幅>6%放弃"
-    },
-    {
-      "code": "002328",
-      "name": "新朋股份",
-      "chg": 10.01,
-      "price": 10.11,
-      "turnover": 280544.0,
-      "strategy": "收盘获利大于62%",
-      "price_1430": 10.11,
-      "filter_reason": "涨幅>6%放弃"
-    },
-    {
-      "code": "002418",
-      "name": "康盛股份",
-      "chg": 10.06,
-      "price": 5.69,
-      "turnover": 402530.0,
-      "strategy": "收盘获利大于62%",
-      "price_1430": 5.69,
-      "filter_reason": "涨幅>6%放弃"
-    },
-    {
       "code": "002528",
       "name": "ST英飞拓",
-      "chg": 4.98,
-      "price": 4.85,
-      "turnover": 338006.0,
-      "strategy": "收盘获利大于62%",
-      "price_1430": 4.85,
-      "filter_reason": "换手率>15%排除"
+      "price": 5.09,
+      "chg_pct": 4.95,
+      "turnover": 1.14,
+      "score": 67.0,
+      "buy_price": 5.04,
+      "stop_price": 4.94
     },
     {
-      "code": "603301",
-      "name": "振德医疗",
-      "chg": -6.01,
-      "price": 81.77,
-      "turnover": 16199.0,
-      "strategy": "60天的主力净流入天数大于35天",
-      "price_1430": 81.77,
-      "filter_reason": "换手率>15%排除"
+      "code": "002990",
+      "name": "盛视科技",
+      "price": 35.03,
+      "chg_pct": 3.03,
+      "turnover": 6.03,
+      "score": 67.0,
+      "buy_price": 34.68,
+      "stop_price": 33.98
+    },
+    {
+      "code": "601077",
+      "name": "渝农商行",
+      "price": 7.3,
+      "chg_pct": 0.14,
+      "turnover": 0.13,
+      "score": 62.0,
+      "buy_price": 7.23,
+      "stop_price": 7.08
     },
     {
       "code": "300923",
       "name": "研奥股份",
-      "chg": 1.83,
-      "price": 27.75,
-      "turnover": 7768.0,
-      "strategy": "60天的主力净流入天数大于35天",
-      "price_1430": 27.75,
-      "filter_reason": "换手率>15%排除"
+      "price": 26.96,
+      "chg_pct": -2.85,
+      "turnover": 0.85,
+      "score": 55.0,
+      "buy_price": 26.69,
+      "stop_price": 26.15
+    },
+    {
+      "code": "001234",
+      "name": "泰慕士",
+      "price": 26.21,
+      "chg_pct": 1.71,
+      "turnover": 1.75,
+      "score": 50.0,
+      "buy_price": 25.95,
+      "stop_price": 25.42
+    },
+    {
+      "code": "301167",
+      "name": "建研设计",
+      "price": 16.18,
+      "chg_pct": -2.0,
+      "turnover": 2.32,
+      "score": 45.0,
+      "buy_price": 16.02,
+      "stop_price": 15.69
+    },
+    {
+      "code": "603301",
+      "name": "振德医疗",
+      "price": 84.27,
+      "chg_pct": 3.06,
+      "turnover": 0.96,
+      "score": 35.0,
+      "buy_price": 83.43,
+      "stop_price": 81.74
     },
     {
       "code": "301057",
       "name": "汇隆新材",
-      "chg": -0.19,
-      "price": 32.32,
-      "turnover": 8524.0,
-      "strategy": "60天的主力净流入天数大于35天",
-      "price_1430": 32.32,
-      "filter_reason": "换手率>15%排除"
+      "price": 31.45,
+      "chg_pct": -2.69,
+      "turnover": 1.01,
+      "score": 35.0,
+      "buy_price": 31.14,
+      "stop_price": 30.51
     }
   ],
-  "final_recommendations": [],
-  "filter_applied_at": "2026-04-13 07:15:56"
+  "saved_at": "2026-04-13 12:11:37"
 }
