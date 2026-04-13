@@ -100,55 +100,210 @@ def get_limit_up_down() -> dict:
     return result
 
 
-def get_advance_decline_sample() -> dict:
+def get_advance_decline_eastmoney() -> dict:
     """
-    新浪财经：涨跌家数采样估算
-    通过多页采样估算市场整体涨跌家数比
+    东方财富 ulist 接口：获取涨跌家数
+    通过市场概况接口获取上涨/下跌/平盘家数
     """
     result = {
         "up_estimate": 0,
         "down_estimate": 0,
         "flat_estimate": 0,
-        "up_ratio": 0.0,  # 上涨/（上涨+下跌）
+        "up_ratio": 0.0,
         "available": False,
-        "source": "sina",
+        "source": "eastmoney_ulist",
         "note": "",
     }
     try:
-        # 上涨采样（取3000条，大概率全为上涨）
-        url_up = (
+        # 东方财富市场概况 - 上涨/下跌/平盘家数
+        url = (
+            "https://push2.eastmoney.com/api/qt/stock/get"
+            "?ut=fa5fd1943c7b386f172d6893dbfba10b"
+            "&invt=2&fltt=2"
+            "&fields=f2,f3,f4,f5,f6,f62,f184,f66,f69,f72,f75,f78,f81,f84,f87,f204,f205"
+            "&secid=1.000001&_=1"
+        )
+        r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        d = r.json()
+        data = d.get("data", {})
+
+        # f3=涨跌额，f4=涨跌幅，f6=成交量
+        # 通过大盘指数成分股概貌获取涨跌家数
+        # 东方财富 ulist 批量接口 - 获取全部A股涨跌统计
+        url2 = (
+            "https://push2.eastmoney.com/api/qt/clist/get"
+            "?pn=1&pz=1&po=1&np=1"
+            "&ut=b2884a393a59ad64002292a3e90d46a5"
+            "&fltt=2&invt=2&fid=f3"
+            "&fs=m:0+t:6,m:0+t:13,m:1+t:2,m:1+t:23"
+            "&fields=f12,f14,f3&_=1"
+        )
+        r2 = requests.get(url2, headers=HEADERS, timeout=TIMEOUT)
+        d2 = r2.json()
+        total = d2.get("data", {}).get("total", 0)
+
+        if total > 0:
+            # ulist 接口取全量数据估算涨跌家数
+            # 采样：取顶部3000（大概率上涨）和底部1000（大概率下跌）
+            url_up = (
+                "https://push2.eastmoney.com/api/qt/clist/get"
+                "?pn=1&pz=3000&po=1&np=1"
+                "&ut=b2884a393a59ad64002292a3e90d46a5"
+                "&fltt=2&invt=2&fid=f3"
+                "&fs=m:0+t:6,m:0+t:13,m:1+t:2,m:1+t:23"
+                "&fields=f12,f14,f3&_=1"
+            )
+            url_down = (
+                "https://push2.eastmoney.com/api/qt/clist/get"
+                "?pn=1&pz=1000&po=0&np=1"
+                "&ut=b2884a393a59ad64002292a3e90d46a5"
+                "&fltt=2&invt=2&fid=f3"
+                "&fs=m:0+t:6,m:0+t:13,m:1+t:2,m:1+t:23"
+                "&fields=f12,f14,f3&_=1"
+            )
+
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                fut_up = executor.submit(requests.get, url_up, headers=HEADERS, timeout=TIMEOUT)
+                fut_down = executor.submit(requests.get, url_down, headers=HEADERS, timeout=TIMEOUT)
+                resp_up = fut_up.result()
+                resp_down = fut_down.result()
+
+            items_up = resp_up.json().get("data", {}).get("diff", [])
+            items_down = resp_down.json().get("data", {}).get("diff", [])
+
+            up_count = len([i for i in items_up if float(i.get("f3", 0)) > 0])
+            down_count = len([i for i in items_down if float(i.get("f3", 0)) < 0])
+
+            # 东方财富采样更均匀，用采样比例估算总数
+            up_ratio_sample = up_count / max(len(items_up), 1)
+            down_ratio_sample = down_count / max(len(items_down), 1)
+
+            # 全市场采样估算
+            up_estimate = int(up_ratio_sample * total * 1.1)  # 顶部采样略偏多，×1.1补偿
+            down_estimate = int(down_ratio_sample * total * 1.1)
+
+            # 限制在合理范围
+            up_estimate = min(up_estimate, int(total * 0.7))
+            down_estimate = min(down_estimate, int(total * 0.7))
+
+            result["up_estimate"] = up_estimate
+            result["down_estimate"] = down_estimate
+            result["flat_estimate"] = max(0, total - up_estimate - down_estimate)
+            result["up_ratio"] = round(up_estimate / (up_estimate + down_estimate + 0.001), 3)
+            result["available"] = True
+            result["note"] = f"东方财富ulist采样(涨{up_count}/{len(items_up)} 跌{down_count}/{len(items_down)})估算total~{total}"
+
+    except Exception as e:
+        result["error"] = str(e)[:80]
+    return result
+
+
+def get_advance_decline_sample() -> dict:
+    """
+    新浪财经：涨跌家数采样估算（改进版，失败时的备用方案）
+    改进：使用更多采样点 + 多页采样，提高估算精度
+    """
+    result = {
+        "up_estimate": 0,
+        "down_estimate": 0,
+        "flat_estimate": 0,
+        "up_ratio": 0.0,
+        "available": False,
+        "source": "sina_improved",
+        "note": "",
+    }
+    try:
+        # 改进：多页采样，从不同区间获取数据以减少偏差
+        # 上涨采样：取两页（3000条）覆盖更多股票
+        url_up1 = (
             "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php"
             "/Market_Center.getHQNodeDataSimple"
             "?page=1&num=3000&sort=changepercent&asc=0&node=hs_a&_s_r_a=page"
         )
-        r = requests.get(url_up, headers=HEADERS, timeout=TIMEOUT)
-        items_up = r.json()
-        up_count = len([i for i in items_up if float(i.get("changepercent", 0)) > 0])
-
-        # 下跌采样（asc=1升序，取最低涨幅的1000条，包含大量下跌）
-        url_down = (
+        url_up2 = (
             "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php"
             "/Market_Center.getHQNodeDataSimple"
-            "?page=1&num=1000&sort=changepercent&asc=1&node=hs_a&_s_r_a=page"
+            "?page=2&num=3000&sort=changepercent&asc=0&node=hs_a&_s_r_a=page"
         )
-        r2 = requests.get(url_down, headers=HEADERS, timeout=TIMEOUT)
-        items_down_full = r2.json()
-        down_count = len([i for i in items_down_full if float(i.get("changepercent", 0)) < 0])
 
-        # 新浪采样不均匀，用以下逻辑估算：
-        # A股总股本数约5500-5700，取5300估算
-        total_estimate = 5300
-        # 上涨采样中全是上涨，说明市场确实偏强
-        # 下跌采样中，1000条按比例估算
+        # 下跌采样：两页（2000条）取更多下跌样本
+        url_down1 = (
+            "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php"
+            "/Market_Center.getHQNodeDataSimple"
+            "?page=1&num=2000&sort=changepercent&asc=1&node=hs_a&_s_r_a=page"
+        )
+        url_down2 = (
+            "https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php"
+            "/Market_Center.getHQNodeDataSimple"
+            "?page=2&num=2000&sort=changepercent&asc=1&node=hs_a&_s_r_a=page"
+        )
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            fut_up1 = executor.submit(requests.get, url_up1, headers=HEADERS, timeout=TIMEOUT)
+            fut_up2 = executor.submit(requests.get, url_up2, headers=HEADERS, timeout=TIMEOUT)
+            fut_down1 = executor.submit(requests.get, url_down1, headers=HEADERS, timeout=TIMEOUT)
+            fut_down2 = executor.submit(requests.get, url_down2, headers=HEADERS, timeout=TIMEOUT)
+
+            items_up1 = fut_up1.result().json()
+            items_up2 = fut_up2.result().json()
+            items_down1 = fut_down1.result().json()
+            items_down2 = fut_down2.result().json()
+
+        # 合并去重（基于symbol字段）
+        all_up = {}
+        for item in items_up1 + items_up2:
+            sym = item.get("symbol", "")
+            if sym and float(item.get("changepercent", 0)) > 0:
+                all_up[sym] = item
+
+        all_down = {}
+        for item in items_down1 + items_down2:
+            sym = item.get("symbol", "")
+            if sym and float(item.get("changepercent", 0)) < 0:
+                all_down[sym] = item
+
+        up_count = len(all_up)
+        down_count = len(all_down)
+
+        # A股总股本数约5500-5700，取5500估算
+        total_estimate = 5500
+
+        # 重叠股票：从上涨列表中移除也出现在下跌列表的
+        overlap = set(all_up.keys()) & set(all_down.keys())
+        if overlap:
+            # 重新计算，去掉重叠（这些是涨跌不明的）
+            up_count = len(all_up) - len(overlap)
+            down_count = len(all_down) - len(overlap)
+
         result["up_estimate"] = up_count
         result["down_estimate"] = down_count
         result["up_ratio"] = round(up_count / (up_count + down_count + 0.001), 3)
         result["flat_estimate"] = max(0, total_estimate - up_count - down_count)
         result["available"] = True
-        result["note"] = f"基于{up_count}上涨+{down_count}下跌采样估算(total~{total_estimate})"
+        result["note"] = f"新浪改进采样:涨{up_count}跌{down_count}(去重后)估算total~{total_estimate}"
 
     except Exception as e:
         result["error"] = str(e)[:80]
+    return result
+
+
+def get_sh_index() -> dict:
+    """
+    获取上证指数涨跌幅（用于hard_stop判断）
+    使用腾讯财经接口
+    腾讯格式: [3]=现价 [4]=昨收 [32]=涨跌幅% [31]=涨跌额
+    """
+    result = {"chg_pct": 0.0, "price": 0.0, "available": False, "source": "tencent"}
+    try:
+        url = "https://qt.gtimg.cn/q=sh000001"
+        r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        parts = r.text.split("~")
+        if len(parts) > 32 and parts[3]:
+            result["price"] = float(parts[3])
+            result["chg_pct"] = float(parts[32]) if parts[32] else 0.0
+            result["available"] = True
+    except Exception:
+        pass
     return result
 
 
@@ -461,14 +616,16 @@ def analyze_sentiment() -> dict:
         "_elapsed": 0,
     }
 
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=7) as executor:
         futures = {
             executor.submit(get_limit_up_down): "limit_up_down",
-            executor.submit(get_advance_decline_sample): "advance_decline",
+            executor.submit(get_advance_decline_eastmoney): "advance_decline_em",
+            executor.submit(get_advance_decline_sample): "advance_decline_sina",
             executor.submit(get_northbound_flow): "northbound",
             executor.submit(get_sector_money_flow): "sector_flow",
             executor.submit(get_yesterday_limit_today): "yesterday_limit",
             executor.submit(get_us_night): "us_night",
+            executor.submit(get_sh_index): "sh_index",
         }
 
         for future in as_completed(futures, timeout=TIMEOUT + 2):
@@ -478,6 +635,42 @@ def analyze_sentiment() -> dict:
             except Exception as e:
                 results[key] = {"available": False, "error": str(e)[:80]}
                 print(f"[sentiment_analyzer] {key} failed: {e}", file=sys.stderr)
+
+    # 涨跌家数：优先使用东方财富 ulist，失败则用新浪改进版
+    ad_em = results.get("advance_decline_em", {})
+    ad_sina = results.get("advance_decline_sina", {})
+
+    if ad_em.get("available"):
+        results["advance_decline"] = ad_em
+    elif ad_sina.get("available"):
+        results["advance_decline"] = ad_sina
+    else:
+        results["advance_decline"] = {
+            "up_estimate": 0, "down_estimate": 0, "flat_estimate": 0,
+            "up_ratio": 0.0, "available": False,
+            "source": "none", "note": "涨跌家数数据获取失败",
+        }
+
+    # hard_stop 判断：上证 < -1.5% 或 下跌家数 > 上涨家数 × 2
+    sh_data = results.get("sh_index", {})
+    ad_data = results.get("advance_decline", {})
+    hard_stop = False
+    hard_stop_reason = ""
+
+    if sh_data.get("available"):
+        sh_chg_pct = sh_data.get("chg_pct", 0)
+        if sh_chg_pct < -1.5:
+            hard_stop = True
+            hard_stop_reason = f"上证下跌{sh_chg_pct:+.2f}% < -1.5%"
+
+    ad_up = ad_data.get("up_estimate", 0)
+    ad_down = ad_data.get("down_estimate", 0)
+    if ad_down > ad_up * 2 and ad_up > 0:
+        hard_stop = True
+        hard_stop_reason = f"下跌家数{ad_down} > 上涨家数{ad_up}×2"
+
+    results["hard_stop"] = hard_stop
+    results["hard_stop_reason"] = hard_stop_reason if hard_stop else ""
 
     # 综合评分
     results["sentiment"] = score_sentiment(

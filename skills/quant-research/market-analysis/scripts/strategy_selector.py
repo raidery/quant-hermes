@@ -5,6 +5,9 @@
 依赖：
   - quant-claw-skill/query.py（问财）
   - quant-research/finance-news/scripts/market_quotes.py（腾讯行情）
+
+⚠️ 策略模板统一从以下 JSON 加载，禁止维护硬编码副本：
+  ~/.hermes/skills/quant-research/strategy-templates/strategy-templates.json
 """
 
 import sys, os, json, time
@@ -19,58 +22,47 @@ MEMORY_DIR.mkdir(exist_ok=True)
 
 sys.path.insert(0, WENCAI_DIR)
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# 内置策略模板（18个策略来自 OpenClaw workspace）
+# 策略模板加载（直接读 JSON，禁止维护硬编码副本）
+# 数据源：~/.hermes/skills/quant-research/strategy-templates/strategy-templates.json
 # ─────────────────────────────────────────────────────────────────────────────
 
-STRATEGY_TEMPLATES = [
-    {
-        "id": "隔夜持股v2.2",
-        "description": "当日涨停后次日开盘/尾盘买入，隔夜持有1-2天",
-        "risk_level": "高",
-        "suitable_market": "强势市场",
-        "position_limit": "30%",
-        "wencai_query": "收盘获利大于62%",
-        "tags": ["隔夜", "涨停后", "强势股"]
-    },
-    {
-        "id": "趋势回踩确认v1.0",
-        "description": "上升趋势中缩量回踩20日均线企稳后买入",
-        "risk_level": "中",
-        "suitable_market": "趋势市场",
-        "position_limit": "30%",
-        "wencai_query": "5天累计涨跌幅大于0%",
-        "tags": ["趋势", "回踩", "均线"]
-    },
-    {
-        "id": "资金共振选股v2.1",
-        "description": "主力资金连续净流入 + 股价站稳5日线",
-        "risk_level": "中",
-        "suitable_market": "通用",
-        "position_limit": "30%",
-        "wencai_query": "60天的主力净流入天数大于35天",
-        "tags": ["资金", "主力", "共振"]
-    },
-    {
-        "id": "突破新高确认v2.0",
-        "description": "突破年内新高，成交量放大确认",
-        "risk_level": "中",
-        "suitable_market": "强势市场",
-        "position_limit": "20%",
-        "wencai_query": "创历史新高",
-        "tags": ["突破", "新高", "放量"]
-    },
-    {
-        "id": "首板战法v1.0",
-        "description": "首日涨停后次日调整到5日线附近低吸",
-        "risk_level": "高",
-        "suitable_market": "强势市场",
-        "position_limit": "20%",
-        "wencai_query": "首板战法",
-        "tags": ["首板", "涨停", "低吸"]
-    },
-]
+_TPL_PATH = Path.home() / ".hermes/skills/quant-research/strategy-templates/strategy-templates.json"
+
+def _load_templates():
+    with open(_TPL_PATH, encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("strategies", [])
+
+_STRATEGIES = None   # 懒加载缓存
+
+def _get_strategies():
+    global _STRATEGIES
+    if _STRATEGIES is None:
+        _STRATEGIES = {s["id"]: s for s in _load_templates()}
+    return _STRATEGIES
+
+def list_active_ids() -> list[str]:
+    """返回当前激活的策略 ID 列表"""
+    tpl_path = Path.home() / ".hermes/skills/quant-research/strategy-templates/strategy-templates.json"
+    with open(tpl_path, encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("active", [])
+
+def get_template_by_id(strategy_id: str) -> dict:
+    """返回完整策略模板 dict，KeyError 如果不存在"""
+    strategies = _get_strategies()
+    if strategy_id not in strategies:
+        raise KeyError(f"未找到策略: {strategy_id}")
+    return strategies[strategy_id]
+
+def get_wencai_query(strategy_id: str) -> str:
+    """返回策略的 wencai_query 字符串"""
+    tpl = get_template_by_id(strategy_id)
+    query = tpl.get("wencai_query", "")
+    if not query:
+        raise ValueError(f"策略 {strategy_id} 没有 wencai_query 字段")
+    return query
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -168,12 +160,17 @@ def run_selected_strategies(
     all_candidates = []
 
     for sid in selected_strategy_ids:
-        tpl = next((t for t in STRATEGY_TEMPLATES if t["id"] == sid), None)
-        if not tpl:
-            print(f"[strategy_selector] WARN: unknown strategy {sid}", file=sys.stderr)
+        try:
+            tpl = get_template_by_id(sid)
+        except (KeyError, ValueError) as e:
+            print(f"[strategy_selector] WARN: {e}", file=sys.stderr)
             continue
 
-        query = tpl["wencai_query"]
+        try:
+            query = get_wencai_query(sid)
+        except ValueError:
+            print(f"[strategy_selector] WARN: strategy {sid} has no wencai_query", file=sys.stderr)
+            continue
         results = wencai_query(query, max_count=max_per_strategy)
 
         # 过滤排除持仓
@@ -263,7 +260,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="市场自适应选股")
     parser.add_argument("--strategies", nargs="+",
-                        default=["隔夜持股v2.2", "资金共振选股v2.1"],
+                        default=["隔夜持股v2.2", "趋势回踩确认v1.0"],
                         help="策略ID列表")
     parser.add_argument("--held", nargs="*", default=[], help="排除的持仓代码")
     args = parser.parse_args()

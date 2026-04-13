@@ -3,7 +3,7 @@ name: market-analysis
 description: 市场自适应选股 — 大盘扫描 + 情绪分析 + CoT推理 + 策略选择 + 问财共振
 category: quant-research
 tags: [选股, 大盘扫描, 情绪分析, 量化]
-version: 1.1.0
+version: 1.3.0
 ---
 
 # 市场自适应选股
@@ -119,6 +119,76 @@ mkt = scan_market()
 sent = analyze_sentiment()
 print(get_brief_summary(sent))  # 简短摘要
 ```
+
+## ⚠️ 已知坑（2026-04-14）
+
+### 1. ✅ 已修复 P0：`strategy_selector.py` 导入路径错误
+
+`strategy_selector.py`、`workflow.py`、`second_confirm.py` 三个文件之前导入了不存在的 `tools._strategy_loader`。
+**已在 v1.2.1 修复**：策略模板改为直接读取 `strategy-templates.json`，不再依赖 `_strategy_loader`。
+
+### 2. JSON 结构（v12）
+```python
+# 正确读取方式
+with open('/home/claw/.hermes/skills/quant-research/strategy-templates/strategy-templates.json') as f:
+    data = json.load(f)
+active_ids = data['active']               # list: ["隔夜持股v2.2", ...]
+strategies_map = {s['id']: s for s in data['strategies']}  # dict
+```
+
+### 3. 🔴 P1 待修复：硬性暂停条件没有代码实现
+
+AGENTS.md 定义了硬性暂停条件：
+- 上证 < -1.5% → 停止所有买入
+- 下跌家数 > 上涨家数 × 2 → 停止所有买入
+
+**现状**：`sentiment_analyzer.py` 和 `market_scanner.py` 中**没有任何代码**判断这两个条件。
+需要在此流程的前置阶段补充实现。
+
+### 4. 🟡 P1 待修复：北向资金数据几乎全为空
+
+`sentiment_analyzer.get_northbound_flow()` 只能获取恒生指数涨跌幅，
+沪股通/深股通净流入、北向合计净流入**全为 None**。
+建议接入东方财富沪深港通接口。
+
+### 5. 🟡 P1 待修复：涨跌家数估算精度问题
+
+新浪双采样方法固定假设 A 股总数 5300，采样量不对称（涨3000/跌1000）。
+建议改用东方财富 ulist 接口获取精确涨跌家数。
+
+`sentiment_analyzer.py` 的 `get_northbound_flow()` 只查了港股指数（恒生/国企）作为代理变量，
+真正的沪股通/深股通净流入**全是 None**。评分权重 20% 的"港股/北向"维度实际上只有港股指数涨跌幅一个数字。
+
+### 5. 14:30 过滤混用两个数据源
+
+`confirm_1430.py` 的 `apply_filter()`：
+```python
+chg = pdata.get("chg_pct", c.get("chg_pct", 0))  # 腾讯实时涨幅 OR 问财原始涨幅
+```
+问财涨幅是静态收盘数据，腾讯涨幅是实时数据，两个口径不同。过滤应**只用问财原始涨幅**，实时价格只用来计算买卖价。
+
+### 6. 数据重复：`market_scanner` 和 `sentiment_analyzer` 都查涨停
+
+两者都从东方财富 `push2.eastmoney.com` 查涨停/跌停，但解析逻辑不同，结果可能矛盾。
+`market_scanner.get_limit_up_count()` 只返回 `{"limit_up": N}`（没有跌停），
+`sentiment_analyzer.get_limit_up_down()` 两者都有。建议统一到 `sentiment_analyzer`，`market_scanner` 引用其结果。
+
+### 7. "半手动"模式的真实含义
+
+**不是"系统自动委托"，而是"系统生成候选 → 写临时文件 → 等用户主动来查"**：
+- Cron 13:00 → 保存 `selections/{date}.json`
+- Cron 14:30 → 读取 JSON → 过滤 → 输出 `/tmp/aftermarket_{date}.txt`
+- **没有自动推送机制**，用户必须问"今日选股"才能看到结果
+
+如需自动推送，需在 `confirm_1430.py` 的 `__main__` 末尾接入 `send_message` 或 cron deliver。
+
+### 8. 持仓超限不阻止
+
+铁律"持仓 ≤ 3 只"只有 `print()` 提示，**没有任何机制阻止超限买入**。建议在 `confirm_1430.py` 输出中加入持仓数量检查。
+
+### 9. 过滤结果没有选股评分
+
+SKILL.md 说"评分≥75优先，<60排除"，但 `apply_filter()` 没有调用评分模块，排序只用涨幅。评分模块 (`score_calibration.py`) 需要接入此流程。
 
 ## 持仓路径
 

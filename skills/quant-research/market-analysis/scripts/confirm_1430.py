@@ -33,54 +33,84 @@ def load_today_selections() -> dict | None:
 
 
 def build_price_map(candidates: list[dict]) -> dict[str, dict]:
-    """腾讯批量查询实时价格，返回 {code: {price, chg, turnover}}"""
-    # 转换代码：6开头→sh，0/3开头→sz
-    formatted = []
-    code_map = {}
-    for c in candidates:
-        code = c["code"]
+    """
+    腾讯批量查询实时价格（简版API，稳定支持A股/北交所个股）。
+    返回 {code: {price, chg_pct, volume, turnover}}
+    
+    腾讯完整版对A股个股批量查询返回 none_match，简版(s_)可用。
+    """
+    import requests as _requests
+
+    def _to_api_code(code: str) -> str:
+        code = code.replace(".SH","").replace(".SZ","").replace(".BJ","")
         if code.startswith("6"):
-            api_code = f"sh{code}"
-        elif code.startswith(("0", "3")):
-            api_code = f"sz{code}"
-        elif code.startswith("8") or code.startswith("4"):
-            api_code = f"bj{code}"   # 北交所
-        else:
-            api_code = code
-        formatted.append(api_code)
-        code_map[api_code] = code
+            return f"sh{code}"
+        elif code.startswith(("0","3")):
+            return f"sz{code}"
+        elif code.startswith(("4","8")):
+            return f"bj{code}"
+        return code
 
-    if not formatted:
-        return {}
+    api_codes = [_to_api_code(c["code"]) for c in candidates]
+    code_map = {_to_api_code(c["code"]): c["code"] for c in candidates}
 
-    quotes = TencentMarket.fetch_all(codes=formatted)
     price_map = {}
-    for q in quotes:
-        canon = code_map.get(q.symbol, q.symbol)
-        price_map[canon] = {
-            "price": q.price,
-            "chg": q.change_pct,
-            "volume": q.volume,
-            "turnover": q.turnover,
-        }
+    BATCH = 50
+    for i in range(0, len(api_codes), BATCH):
+        batch = api_codes[i:i+BATCH]
+        url = f"https://qt.gtimg.cn/q={','.join(batch)}"
+        try:
+            r = _requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+            r.encoding = "gbk"
+        except Exception:
+            continue
+
+        for line in r.text.strip().split(";"):
+            if "=" not in line or "none_match" in line:
+                continue
+            raw = line.split("=")[0].strip().replace("v_", "")
+            code = raw[2:] if raw.startswith("s_") else raw  # 去掉s_前缀还原
+            canon = code_map.get(code, code)
+            fields = line.split('"')[1].split("~")
+            try:
+                price = float(fields[3])
+                raw_chg = float(fields[4]) if fields[4] else 0.0
+                chg_pct = float(fields[5]) if (len(fields) > 5 and fields[5]) else raw_chg
+                # 某些股票fields[4]本身就是涨跌幅（字段格式差异）
+                if chg_pct == 0 and raw_chg != 0 and abs(raw_chg) < 300:
+                    chg_pct = raw_chg
+                price_map[canon] = {
+                    "price": price,
+                    "chg_pct": chg_pct,
+                    "volume": int(float(fields[6])) if (len(fields) > 6 and fields[6]) else 0,
+                    "turnover": float(fields[7]) if (len(fields) > 7 and fields[7]) else 0,
+                }
+            except (IndexError, ValueError):
+                pass
+
     return price_map
 
 
 def apply_filter(candidates: list[dict], price_map: dict[str, dict]) -> list[dict]:
     """
-    14:30 过滤规则：
+    14:30 过滤规则（使用问财原始涨幅和换手率）：
     - 涨幅 ≤ 6%（追高风险）
     - 涨幅 ≥ -3%（跌幅超-3%则止损条件已触发，放弃）
     - 换手率 ≤ 15%（过度炒作风险）
-    同时计算：买入价 = 当前价×0.99，止损价 = 买入价×0.97
+    腾讯实时数据仅用于计算买卖价（现价×0.99买入，现价×0.97止损）
     """
     after = []
     for c in candidates:
         code = c["code"]
         pdata = price_map.get(code, {})
+
+        # 过滤条件：使用问财原始字段（不从腾讯实时数据读取）
+        # 问财返回字段名是 chg / turnover，非 chg_pct / turnover_pct
+        chg    = c.get("chg", 0)
+        turn   = c.get("turnover", 0)
+
+        # 腾讯实时数据仅用于计算买卖价
         price  = pdata.get("price", c.get("price", 0))
-        chg    = pdata.get("chg", c.get("chg", 0))
-        turn   = pdata.get("turnover", c.get("turnover", 0))
 
         c["price_1430"] = price
         c["chg"] = chg
