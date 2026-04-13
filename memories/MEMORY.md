@@ -26,6 +26,14 @@
 
 ## Browser Use规则 | 付费/重量级工具必须先让用户review同意后才能使用，禁止擅自调用
 §
+## GitHub提交规则（2026-04-13新增 铁律）
+- **所有GitHub提交（git commit + git push）必须先让用户review确认后再执行**
+- 操作流程：先展示 git diff / git status → 用户确认 → 执行 commit → 用户确认 → 执行 push
+- 禁止擅自提交后再告知用户
+§
+## GitHub仓库
+- 仓库: git@github.com:raidery/quant-hermes.git | 分支: main | 根目录: /home/claw/.hermes/
+§
 ## 量化系统构建（2026-04-13更新）
 
 ### sentiment_analyzer.py 新建

@@ -62,7 +62,28 @@ skills/.bundled_manifest
 
 # =============================================================================
 # Lock 文件
-# =============================================================================
+# 内置系统 Skills（不提交）
+self-improving-agent/
+skills/autonomous-ai-agents/
+skills/browser-use/
+skills/data-science/
+skills/devops/
+skills/diagramming/
+skills/dogfood/
+skills/domain/
+skills/feeds/
+skills/gifs/
+skills/hermes/
+skills/inference-sh/
+skills/mcp/
+skills/migration/
+skills/mlops/
+skills/productivity/
+skills/skill-vetter/
+skills/software-development/
+skills/superpowers/
+
+# Lock 文件
 *.lock
 MEMORY.md.lock
 USER.md.lock

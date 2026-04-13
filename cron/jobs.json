@@ -1,0 +1,114 @@
+{
+  "jobs": [
+    {
+      "id": "c51ec049c4c4",
+      "name": "\u8d22\u7ecf\u65e9\u9910",
+      "prompt": "\u6293\u53d6\u8d22\u7ecf\u65e9\u9910\u5feb\u8baf\uff0c\u8f93\u51fa markdown \u683c\u5f0f\uff0c\u53d1\u9001\u7ed9\u7528\u6237\u3002\n\n\u6b65\u9aa4\uff1a\n1. import sys; sys.path.insert(0, '/home/claw/.hermes/skills/quant-research/finance-news/scripts')\n2. from scraper import FinanceNewsScraper\n3. scraper = FinanceNewsScraper()\n4. items = scraper.fetch_all(sources=['eastmoney', 'sina', 'iwencai', 'cailian'], page_size=20)\n5. from datetime import datetime; title = '\ud83d\udcf0 \u8d22\u7ecf\u65e9\u9910 ' + datetime.now().strftime('%Y-%m-%d')\n6. output = scraper.to_markdown(items, title=title)\n7. \u5c06 output \u4f5c\u4e3a\u6700\u7ec8\u56de\u590d\u8fd4\u56de\u5373\u53ef\n\n\u8981\u6c42\uff1a\n- \u8f93\u51fa\u683c\u5f0f\uff1a\u98de\u4e66 Markdown\n- \u6807\u9898\u4f7f\u7528 emoji\uff1a\ud83d\udcf0 \u8d22\u7ecf\u65e9\u9910 YYYY-MM-DD\n- \u6bcf\u6761\u5feb\u8baf\u5e26\u6765\u6e90\u6807\u7b7e\u65b9\u4fbf\u533a\u5206",
+      "skills": [
+        "finance-news"
+      ],
+      "skill": "finance-news",
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 7 * * *",
+        "display": "30 7 * * *"
+      },
+      "schedule_display": "30 7 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 4
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-12T09:33:49.209526+08:00",
+      "next_run_at": "2026-04-14T07:30:00+08:00",
+      "last_run_at": "2026-04-13T07:32:03.563972+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "feishu",
+      "origin": null
+    },
+    {
+      "id": "0888c2b3f114",
+      "name": "\u9009\u80a1\u521d\u7b5b",
+      "prompt": "\u6267\u884c\u9009\u80a1\u521d\u7b5b\uff0813:00\uff09\u2014 \u5e02\u573a\u81ea\u9002\u5e94\u6d41\u7a0b\uff1a\u5927\u76d8\u626b\u63cf \u2192 CoT\u63a8\u7406 \u2192 \u52a8\u6001\u7b56\u7565\u9009\u62e9 \u2192 \u6d41\u5f0f\u6267\u884c \u2192 \u4fdd\u5b58\n\n\u3010\u94c1\u5f8b\u3011\n1. \u6b62\u635f-3%\u65e0\u6761\u4ef6\u6267\u884c\n2. \u7981\u6b62\u9ad8\u5f00\u8ffd\u4e70\uff08\u6da8\u5e45>3%\u4e0d\u4e70\uff09\n3. \u540c\u65f6\u6301\u4ed3\u22643\u53ea\uff0c\u5355\u7968\u4ed3\u4f4d\u226430%\n4. \u6700\u4f73\u4e70\u5165\u65f6\u673a\uff1a\u5c3e\u76d814:30\u540e\uff08\u4e0d\u63d0\u524d\u4e70\uff09\n\n\u3010\u5468\u4e94\u7279\u522b\u3011\u82e5\u4e3a\u5468\u4e94\uff0c\u4ed3\u4f4d\u4e0a\u9650\u964d\u81f320%\uff0c\u4ec5\u9009\u6700\u5f3a\u4e3b\u7ebf1\u53ea\u3002\n\n\u2501\u2501 Step 1\uff1a\u5927\u76d8\u5feb\u901f\u626b\u63cf \u2501\u2501\n\npython3 << 'PYEOF'\nimport sys\nsys.path.insert(0, '/home/claw/.hermes/skills/quant-research/market-analysis/scripts')\nfrom market_scanner import scan_market, format_market_report\ndata = scan_market()\nprint(format_market_report(data))\nPYEOF\n\n\u2501\u2501 Step 2\uff1a\u8bfb\u53d6\u6301\u4ed3\uff08\u6392\u9664\u5df2\u6301\u6709\uff09 \u2501\u2501\n\n\u8bfb\u53d6 ~/.hermes/skills/quant-strategy/memory/holdings.json\uff0c\u83b7\u53d6\u5f53\u524d open lots \u7684 code \u96c6\u5408\uff08\u6392\u9664ETF\uff09\uff0c\u6253\u5370\u6392\u9664\u6301\u4ed3\u5217\u8868\u3002\n\n\u2501\u2501 Step 3\uff1a\u5c55\u793a\u7b56\u7565\u6a21\u677f \u2501\u2501\n\n\u5185\u7f6e5\u4e2a\u7b56\u7565\u6a21\u677f\uff1a\n- \u9694\u591c\u6301\u80a1v2.2\uff1a\u9002\u5408\u5f3a\u52bf\u5e02\u573a | \u98ce\u9669:\u9ad8 | \u4ed3\u4f4d\u226430%\n- \u8d8b\u52bf\u56de\u8e29\u786e\u8ba4v1.0\uff1a\u9002\u5408\u8d8b\u52bf\u5e02\u573a | \u98ce\u9669:\u4e2d | \u4ed3\u4f4d\u226430%\n- \u8d44\u91d1\u5171\u632f\u9009\u80a1v2.1\uff1a\u9002\u5408\u901a\u7528 | \u98ce\u9669:\u4e2d | \u4ed3\u4f4d\u226430%\n- \u7a81\u7834\u65b0\u9ad8\u786e\u8ba4v2.0\uff1a\u9002\u5408\u5f3a\u52bf\u5e02\u573a | \u98ce\u9669:\u4e2d | \u4ed3\u4f4d\u226420%\n- \u9996\u677f\u6218\u6cd5v1.0\uff1a\u9002\u5408\u5f3a\u52bf\u5e02\u573a | \u98ce\u9669:\u9ad8 | \u4ed3\u4f4d\u226420%\n\n\u2501\u2501 Step 4\uff1aCoT \u63a8\u7406 \u2501\u2501\n\n\u3010\u8bf7\u7528CoT\u6a21\u5f0f\u9010\u6b65\u63a8\u7406\uff0c\u53c2\u8003\u4ee5\u4e0a\u5e02\u573a\u6570\u636e\uff0c\u9009\u51fa2-3\u4e2a\u6700\u9002\u5408\u5f53\u524d\u5e02\u573a\u7684\u7b56\u7565\u3011\n\n\u8f93\u51fa\u683c\u5f0f\uff1a\n```\n\u3010\u5e02\u573a\u5206\u6790\u3011\n...\uff08\u5206\u6790\u5927\u76d8\u65b9\u5411\u3001\u529b\u5ea6\u3001\u60c5\u7eea\u3001\u4e3b\u7ebf\uff0c\u81f3\u5c113\u53e5\u8bdd\uff09...\n\n\u3010\u7b56\u7565\u5339\u914d\u3011\n...\uff08\u5bf9\u5404\u7b56\u7565\u7ed9\u51fa\u5224\u65ad\uff1a\u9002\u5408/\u4e0d\u9002\u5408\u53ca\u539f\u56e0\uff09...\n\n\u3010\u7b56\u7565\u9009\u62e9\u3011\uff08\u6700\u591a3\u4e2a\uff09\n1. [\u7b56\u7565\u540d] | \u4f18\u5148\u7ea7: 1 | \u7406\u7531: ...\n2. [\u7b56\u7565\u540d] | \u4f18\u5148\u7ea7: 2 | \u7406\u7531: ...\n```\n\n\u3010\u91cd\u8981\u3011\u8f93\u51fa\u5b8c\u6574CoT\u63a8\u7406\u8fc7\u7a0b\uff0c\u8fd9\u662f\u63a8\u9001\u5230\u98de\u4e66\u7684\u7b2c\u4e00\u6761\u6d88\u606f\u3002\n\u3010\u6050\u614c\u6740\u8dcc/\u504f\u5f31\u9000\u6f6e\u3011\u2192 \u76f4\u63a5\u8f93\u51fa\"\u4eca\u65e5\u4e0d\u6267\u884c\u9009\u80a1\uff0c\u5efa\u8bae\u7a7a\u4ed3\u89c2\u671b\"\u5e76\u7ed3\u675f\u3002\n\n\u2501\u2501 Step 5\uff1a\u6267\u884c\u9009\u4e2d\u7684\u7b56\u7565 \u2501\u2501\n\n\u6839\u636eStep 4\u9009\u4e2d\u7684\u7b56\u7565ID\uff0c\u6267\u884c\u95ee\u8d22\u67e5\u8be2\u5e76\u6d41\u5f0f\u8f93\u51fa\u7ed3\u679c\u3002\n\npython3 << 'PYEOF'\nimport sys, os, json\nsys.path.insert(0, '/home/claw/.hermes/skills/quant-research/market-analysis/scripts')\nfrom strategy_selector import run_selected_strategies, format_selection_report\n\n# \u3010\u7531\u4f60\u6839\u636eStep 4\u7684CoT\u8f93\u51fa\u586b\u5199\u7b56\u7565ID\u3011\n# \u793a\u4f8b\uff1aselected = ['\u9694\u591c\u6301\u80a1v2.2', '\u8d44\u91d1\u5171\u632f\u9009\u80a1v2.1']\nselected = []  # \u2190 \u66ff\u6362\u4e3aStep 4\u9009\u4e2d\u7684\u7b56\u7565\n\nif not selected:\n    print('ERROR: \u6ca1\u6709\u9009\u4e2d\u7b56\u7565\uff0c\u8bf7\u68c0\u67e5Step 4\u8f93\u51fa')\n    sys.exit(1)\n\n# \u8bfb\u53d6\u6301\u4ed3\u6392\u9664\nhp = '/home/claw/.hermes/skills/quant-strategy/memory/holdings.json'\nwith open(hp) as f:\n    held = {l['code'] for l in json.load(f).get('lots', [])\n            if l.get('status')=='open' and l.get('code')!='ETF'}\n\nresults, candidates = run_selected_strategies(selected, held=held)\nreport = format_selection_report(results, candidates)\nprint(report)\nPYEOF\n\n\u3010\u91cd\u8981\u3011\u6bcf\u4e2a\u7b56\u7565\u67e5\u5b8c\u540e\u7acb\u5373\u5728\u56de\u590d\u4e2d\u8f93\u51fa\u8be5\u7b56\u7565\u7684\u7ed3\u679c\u3002\n\n\u2501\u2501 Step 6\uff1a\u4fdd\u5b58\u9009\u80a1\u6570\u636e \u2501\u2501\n\npython3 << 'PYEOF'\nimport sys, os, json, time\nsys.path.insert(0, '/home/claw/.hermes/skills/quant-research/market-analysis/scripts')\nfrom strategy_selector import run_selected_strategies, save_selection_data\n\n# \u3010\u7531\u4f60\u6839\u636eStep 4\u586b\u5199\u3011\nselected = []  # \u2190 \u66ff\u6362\u4e3aStep 4\u9009\u4e2d\u7684\u7b56\u7565\n\nhp = '/home/claw/.hermes/skills/quant-strategy/memory/holdings.json'\nwith open(hp) as f:\n    held = {l['code'] for l in json.load(f).get('lots', [])\n            if l.get('status')=='open' and l.get('code')!='ETF'}\n\nresults, candidates = run_selected_strategies(selected, held=held)\nfilepath = save_selection_data(selected, results, candidates)\nprint(f'\u2705 \u6570\u636e\u5df2\u4fdd\u5b58: {filepath}')\nPYEOF",
+      "skills": [
+        "market-analysis",
+        "finance-news",
+        "quant-claw-skill"
+      ],
+      "skill": "market-analysis",
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 13 * * 1-5",
+        "display": "0 13 * * 1-5"
+      },
+      "schedule_display": "0 13 * * 1-5",
+      "repeat": {
+        "times": null,
+        "completed": 0
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-13T07:08:49.452680+08:00",
+      "next_run_at": "2026-04-14T13:00:00+08:00",
+      "last_run_at": null,
+      "last_status": null,
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "feishu",
+      "origin": null
+    },
+    {
+      "id": "cefe1cfe2e18",
+      "name": "14:30\u4e8c\u6b21\u786e\u8ba4",
+      "prompt": "\u6267\u884c14:30\u4e8c\u6b21\u786e\u8ba4\uff0c\u5b8c\u6210\u6240\u6709\u6b65\u9aa4\uff1a\n\n\u3010\u94c1\u5f8b\u63d0\u9192\u3011\n1. \u6da8\u5e45>6%\u7acb\u5373\u653e\u5f03\n2. \u9884\u8bbe\u4e70\u5165\u4ef7 = \u5f53\u524d\u4ef7\u00d70.99\n3. \u6b62\u635f\u4ef7 = \u4e70\u5165\u4ef7\u00d70.97\n4. \u5355\u7968\u4ed3\u4f4d\u226430%\uff0c\u540c\u65f6\u6301\u4ed3\u22643\u53ea\n\n\u2501\u2501 Step 1\uff1a\u8bfb\u53d6\u9009\u80a1\u6570\u636e \u2501\u2501\n\npython3 << 'PYEOF'\nimport sys, os, json\nfrom datetime import datetime\n\ntoday = datetime.now().strftime(\"%Y-%m-%d\")\nSCRIPT_DIR = \"/home/claw/.hermes/skills/quant-research/market-analysis/scripts\"\nSELECTION_DIR = f\"/home/claw/.hermes/skills/quant-research/market-analysis/memory/selections/{today}.json\"\n\nif not os.path.exists(SELECTION_DIR):\n    print(f\"ERROR: \u9009\u80a1\u6570\u636e\u4e0d\u5b58\u5728 {SELECTION_DIR}\")\n    print(\"\u8bf7\u5148\u786e\u8ba4\u9009\u80a1\u521d\u7b5bcron\u572813:00\u5df2\u6b63\u5e38\u6267\u884c\")\n    sys.exit(1)\n\nwith open(SELECTION_DIR) as f:\n    data = json.load(f)\n\ncandidates = data.get(\"candidates\", [])\nprint(f\"\u8bfb\u53d6\u5019\u9009: {len(candidates)} \u53ea\")\nprint(f\"\u7b56\u7565: {data.get('selected_strategies', [])}\")\nPYEOF\n\n\u3010\u91cd\u8981\u3011\u5982\u679cERROR\u6587\u4ef6\u4e0d\u5b58\u5728 \u2192 \u76f4\u63a5\u8f93\u51fa\"\u4eca\u65e5\u9009\u80a1\u6570\u636e\u4e0d\u5b58\u5728\uff0c\u8bf7\u5148\u786e\u8ba4\u9009\u80a1\u521d\u7b5bcron\u572813:00\u5df2\u6b63\u5e38\u6267\u884c\"\uff0c\u505c\u6b62\u6267\u884c\u3002\n\n\u2501\u2501 Step 2\uff1a\u6267\u884c14:30\u8fc7\u6ee4\u5e76\u8f93\u51fa\u62a5\u544a \u2501\u2501\n\npython3 /home/claw/.hermes/skills/quant-research/market-analysis/scripts/confirm_1430.py\n\n\u3010\u91cd\u8981\u3011\u6b64\u811a\u672c\u5fc5\u987b\u5b8c\u6574\u6267\u884c\uff0c\u8bfb\u53d6\u5f53\u65e5\u9009\u80a1\u6570\u636e \u2192 \u817e\u8baf\u6279\u91cf\u67e5\u5b9e\u65f6\u4ef7 \u2192 \u8fc7\u6ee4 \u2192 \u8ba1\u7b97\u4e70\u5356\u4ef7 \u2192 \u4fdd\u5b58 \u2192 \u8f93\u51fa\u62a5\u544a\u3002\n",
+      "skills": [
+        "market-analysis",
+        "finance-news",
+        "quant-claw-skill"
+      ],
+      "skill": "market-analysis",
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 14 * * 1-5",
+        "display": "0 14 * * 1-5"
+      },
+      "schedule_display": "0 14 * * 1-5",
+      "repeat": {
+        "times": null,
+        "completed": 0
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-13T07:15:30.320150+08:00",
+      "next_run_at": "2026-04-13T14:00:00+08:00",
+      "last_run_at": null,
+      "last_status": null,
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "feishu",
+      "origin": null
+    }
+  ],
+  "updated_at": "2026-04-13T13:00:05.079570+08:00"
+}

@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "interval": 3,
+  "stocks": [
+    {
+      "code": "002565",
+      "name": "顺灏股份"
+    }
+  ],
+  "rules": {
+    "涨停监控": true,
+    "炸板监控": true,
+    "异动监控": true,
+    "跌幅监控": true
+  },
+  "thresholds": {
+    "zhangting_pct": 9.8,
+    "zhaban_pct": 9.3,
+    "yidong_pct": 3.0,
+    "diefu_pct": -3.0
+  }
+}
